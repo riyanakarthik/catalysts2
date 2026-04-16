@@ -1,13 +1,13 @@
 const express = require('express');
 const { registerUser, getUsers, loginUser, deleteUser, verifyLocation } = require('../controllers/userController');
-const authMiddleware = require('../middleware/authMiddleware');
+const { requireAuth, requireRole } = require('../middleware/authMiddleware');
 
 const router = express.Router();
 
 router.post('/register', registerUser);
-router.post('/login', loginUser);  // 👈 ADD THIS
-router.get('/', getUsers);
-router.delete("/me", authMiddleware, deleteUser);
-router.post('/verify-location', authMiddleware, verifyLocation);
+router.post('/login', loginUser);
+router.get('/', requireAuth, requireRole('ADMIN'), getUsers);
+router.delete("/me", requireAuth, deleteUser);
+router.post('/verify-location', requireAuth, verifyLocation);
 
 module.exports = router;

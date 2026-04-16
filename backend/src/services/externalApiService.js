@@ -1,18 +1,9 @@
-// externalApiService.js
-// Integrates with real Open-Meteo and Air Quality APIs
-
 const axios = require('axios');
-
-const ZONE_COORDINATES = {
-  'Koramangala': { lat: 12.9279, lon: 77.6271 },
-  'Indiranagar': { lat: 12.9784, lon: 77.6408 },
-  'Whitefield': { lat: 12.9698, lon: 77.7499 },
-  'HSR Layout': { lat: 12.9121, lon: 77.6446 },
-  'Electronic City': { lat: 12.8399, lon: 77.6770 }
-};
+const { ZONE_COORDINATES, normalizeZoneName } = require('../config/zones');
 
 async function getRealTimeEnvironmentalData(zone) {
-  const coords = ZONE_COORDINATES[zone];
+  const normalizedZone = normalizeZoneName(zone);
+  const coords = ZONE_COORDINATES[normalizedZone];
   if (!coords) {
     throw new Error(`Coordinates not found for zone: ${zone}`);
   }
@@ -54,9 +45,9 @@ async function getRealTimeEnvironmentalData(zone) {
       disruptionFrequency
     };
   } catch (error) {
-    console.error(`[ExternalAPI] Error fetching data for ${zone}:`, error.message);
+    console.error(`[ExternalAPI] Error fetching data for ${normalizedZone}:`, error.message);
     const minuteSeed = new Date().getUTCMinutes();
-    const zoneSeed = zone.length % 5;
+    const zoneSeed = normalizedZone.length % 5;
     const rainfall = Number(((minuteSeed % 3) * 2 + zoneSeed).toFixed(1));
     const aqi = 110 + (zoneSeed * 20) + ((minuteSeed % 4) * 12);
     const disruptionFrequency = Number(Math.min(10, 3 + zoneSeed + (aqi > 180 ? 2 : 0)).toFixed(1));
@@ -71,10 +62,7 @@ async function getRealTimeEnvironmentalData(zone) {
   }
 }
 
-/**
- * Mocks platform outage via a simulated external service check
- * In a real app, this might hit Downdetector APIs or scraping scripts
- */
+// Simulated platform outage check used for prototype trigger automation.
 async function getPlatformOutageStatus() {
   return new Date().getUTCMinutes() % 17 === 0;
 }

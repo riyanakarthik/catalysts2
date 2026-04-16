@@ -1,6 +1,7 @@
 const { PrismaClient } = require('@prisma/client');
 const bcrypt = require('bcrypt');
 const { calculateWeeklyPremium } = require('../src/services/premiumService');
+const { normalizeZoneName } = require('../src/config/zones');
 
 const prisma = new PrismaClient();
 
@@ -11,7 +12,18 @@ async function main() {
   await prisma.policy.deleteMany();
   await prisma.user.deleteMany();
 
-  const password = await bcrypt.hash('Hackathon@123', 10);
+  const adminPassword = await bcrypt.hash('Admin@123', 10);
+  const workerPassword = await bcrypt.hash('Worker@123', 10);
+
+  await prisma.user.create({
+    data: {
+      fullName: 'Demo Admin',
+      phone: '9990000001',
+      password: adminPassword,
+      role: 'ADMIN'
+    }
+  });
+
   const workers = [
     {
       fullName: 'Arjun Kumar',
@@ -38,7 +50,7 @@ async function main() {
       phone: '9876500013',
       platform: 'ZOMATO',
       city: 'Bengaluru',
-      zone: 'HSR',
+      zone: 'HSR Layout',
       avgDailyEarnings: 1050,
       upiId: 'sadiq@upi',
       planType: 'BASIC'
@@ -52,10 +64,10 @@ async function main() {
         phone: worker.phone,
         platform: worker.platform,
         city: worker.city,
-        zone: worker.zone,
+        zone: normalizeZoneName(worker.zone),
         avgDailyEarnings: worker.avgDailyEarnings,
         upiId: worker.upiId,
-        password,
+        password: workerPassword,
         role: 'WORKER'
       }
     });
@@ -81,7 +93,7 @@ async function main() {
     });
   }
 
-  console.log('Seed complete with phase-3 sample workers and active policies.');
+  console.log('Seed complete with demo admin, sample workers, and active policies.');
 }
 
 main()

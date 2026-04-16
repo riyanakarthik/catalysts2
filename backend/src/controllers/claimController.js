@@ -26,6 +26,12 @@ async function getAllClaims(req, res) {
 async function getClaimsByUser(req, res) {
   try {
     const userId = Number(req.params.userId);
+    const isAdmin = req.user?.role === 'ADMIN';
+
+    if (!isAdmin && req.user?.userId !== userId) {
+      return res.status(403).json({ message: 'Forbidden' });
+    }
+
     const claims = await prisma.claim.findMany({
       where: { userId },
       include: {

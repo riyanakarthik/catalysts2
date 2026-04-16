@@ -1,8 +1,9 @@
 const Razorpay = require("razorpay");
+const { getRequiredEnv } = require('../config/env');
 
 const rzp = new Razorpay({
-  key_id: process.env.RAZORPAY_KEY_ID,
-  key_secret: process.env.RAZORPAY_KEY_SECRET,
+  key_id: getRequiredEnv('RAZORPAY_KEY_ID'),
+  key_secret: getRequiredEnv('RAZORPAY_KEY_SECRET'),
 });
 
 // Create order

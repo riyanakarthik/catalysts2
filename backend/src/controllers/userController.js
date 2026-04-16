@@ -2,6 +2,8 @@ const prisma = require('../prisma');
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const { isVelocityAnomalous, verifyDeviceSensors } = require('../services/fraudService');
+const { getRequiredEnv } = require('../config/env');
+const { normalizeZoneName, isSupportedZone } = require('../config/zones');
 
 const allowedPlatforms = ['ZOMATO', 'SWIGGY'];
 
@@ -51,6 +53,10 @@ if (normalizedRole === "WORKER") {
       message: 'Invalid UPI ID. Must be in format: username@provider (e.g. john@oksbi)'
     });
   }
+
+  if (!isSupportedZone(zone)) {
+    return res.status(400).json({ message: 'Unsupported zone. Use a supported Bengaluru zone such as Koramangala or HSR Layout.' });
+  }
 }
 
 let normalizedPlatform;
@@ -93,7 +99,7 @@ if (normalizedRole === "WORKER") {
         ...(normalizedRole === "WORKER" && {
           platform: normalizedPlatform,
           city: String(city).trim(),
-          zone: String(zone).trim(),
+          zone: normalizeZoneName(zone),
           avgDailyEarnings: parsedEarnings,
           upiId: String(upiId).trim()
         })
@@ -157,8 +163,8 @@ async function loginUser(req, res) {
     }
 
     const token = jwt.sign(
-      { userId: user.id },
-      process.env.JWT_SECRET,
+      { userId: user.id, role: user.role },
+      getRequiredEnv('JWT_SECRET'),
       { expiresIn: "7d" }
     );
 

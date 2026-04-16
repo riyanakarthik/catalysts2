@@ -1,24 +1,64 @@
 const jwt = require("jsonwebtoken");
+const prisma = require('../prisma');
+const { getRequiredEnv } = require('../config/env');
 
-module.exports = (req, res, next) => {
-  console.log("Auth middleware hit"); // 👈 ADD THIS
-
+async function requireAuth(req, res, next) {
   const authHeader = req.headers.authorization;
-
-  console.log("Header:", authHeader); // 👈 ADD THIS
 
   if (!authHeader) {
     return res.status(401).json({ error: "No token provided" });
   }
 
   const token = authHeader.split(" ")[1];
+  if (!token) {
+    return res.status(401).json({ error: "Invalid authorization header" });
+  }
 
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || "SECRET_KEY");
-    req.user = decoded;
+    const decoded = jwt.verify(token, getRequiredEnv('JWT_SECRET'));
+    const userId = Number(decoded.userId);
+
+    if (!userId) {
+      return res.status(401).json({ error: "Invalid token" });
+    }
+
+    let role = decoded.role;
+
+    if (!role) {
+      const user = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { id: true, role: true }
+      });
+
+      if (!user) {
+        return res.status(401).json({ error: "User not found" });
+      }
+
+      role = user.role;
+    }
+
+    req.user = { userId, role };
     next();
   } catch (err) {
-    console.log("JWT ERROR:", err.message); // 👈 ADD THIS
     return res.status(401).json({ error: "Invalid token" });
   }
+}
+
+function requireRole(role) {
+  return (req, res, next) => {
+    if (!req.user) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
+
+    if (req.user.role !== role) {
+      return res.status(403).json({ error: 'Forbidden' });
+    }
+
+    return next();
+  };
+}
+
+module.exports = {
+  requireAuth,
+  requireRole
 };

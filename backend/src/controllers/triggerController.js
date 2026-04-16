@@ -2,15 +2,21 @@ const prisma = require('../prisma');
 const { processTriggerClaims } = require('../services/triggerService');
 const { runFraudAssessment } = require('../services/fraudService');
 const { t } = require('../services/i18nService');
+const { normalizeZoneName, isSupportedZone } = require('../config/zones');
 
 async function simulateTrigger(req, res) {
   try {
     const { triggerType, zone, severity = 'medium', source = 'manual-admin-simulation' } = req.body;
+    const normalizedZone = normalizeZoneName(zone);
+
+    if (!isSupportedZone(normalizedZone)) {
+      return res.status(400).json({ message: 'Unsupported zone for trigger simulation' });
+    }
 
     const triggerEvent = await prisma.triggerEvent.create({
       data: {
         triggerType,
-        zone,
+        zone: normalizedZone,
         severity,
         source,
         rainfall: req.body.rainfall ?? null,
@@ -38,11 +44,16 @@ async function simulateTrigger(req, res) {
 async function fraudCheck(req, res) {
   try {
     const { userId, triggerType, zone } = req.body;
+    const normalizedZone = normalizeZoneName(zone || 'Koramangala');
+
+    if (!isSupportedZone(normalizedZone)) {
+      return res.status(400).json({ message: 'Unsupported zone for fraud check' });
+    }
 
     const report = await runFraudAssessment({
       userId: Number(userId),
       triggerType: triggerType || 'RAIN',
-      zone: zone || 'Koramangala'
+      zone: normalizedZone
     });
 
     return res.json(report);

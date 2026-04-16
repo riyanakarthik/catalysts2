@@ -9,7 +9,6 @@ const ZONE_RISK_MAP = {
   Indiranagar: 'medium',
   Whitefield: 'high',
   'HSR Layout': 'low',
-  HSR: 'low',
   'Electronic City': 'medium',
   Marathahalli: 'medium',
   BTM: 'high',

@@ -3,6 +3,7 @@ const razorpayService = require("../services/razorpayService");
 const prisma = require("../prisma");
 const { calculateWeeklyPremium } = require("../services/premiumService");
 const { t } = require('../services/i18nService');
+const { getRequiredEnv } = require('../config/env');
 
 exports.createOrder = async (req, res) => {
   try {
@@ -38,7 +39,7 @@ exports.verifyPayment = async (req, res) => {
     const userId = req.user.userId;
     const body = razorpay_order_id + "|" + razorpay_payment_id;
     const expectedSig = crypto
-      .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
+      .createHmac("sha256", getRequiredEnv('RAZORPAY_KEY_SECRET'))
       .update(body)
       .digest("hex");
 
@@ -92,5 +93,5 @@ exports.verifyPayment = async (req, res) => {
 };
 
 exports.getKey = (req, res) => {
-  res.json({ key: process.env.RAZORPAY_KEY_ID });
+  res.json({ key: getRequiredEnv('RAZORPAY_KEY_ID') });
 };

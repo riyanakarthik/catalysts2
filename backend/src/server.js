@@ -1,7 +1,8 @@
 require('dotenv').config();
 const cors = require('cors');
 const express = require('express');
-const authMiddleware = require('./middleware/authMiddleware');
+const { requireAuth } = require('./middleware/authMiddleware');
+const { getAllowedCorsOrigins, getRequiredEnv } = require('./config/env');
 
 const userRoutes = require('./routes/userRoutes');
 const policyRoutes = require('./routes/policyRoutes');
@@ -13,10 +14,24 @@ const dashboardRoutes = require('./routes/dashboardRoutes');
 const { getZoneRiskSnapshot } = require('./services/riskService');
 const { initCronJobs } = require('./services/cronService');
 
+getRequiredEnv('DATABASE_URL');
+getRequiredEnv('JWT_SECRET');
+getRequiredEnv('RAZORPAY_KEY_ID');
+getRequiredEnv('RAZORPAY_KEY_SECRET');
+
 const app = express();
 const PORT = process.env.PORT || 5001;
+const allowedOrigins = getAllowedCorsOrigins();
 
-app.use(cors());
+app.use(cors({
+  origin(origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+
+    return callback(new Error('Not allowed by CORS'));
+  }
+}));
 app.use(express.json());
 
 app.get('/health', (_, res) => {
@@ -24,14 +39,14 @@ app.get('/health', (_, res) => {
 });
 
 app.use('/api/users', userRoutes);
-app.use('/api/policies', authMiddleware, policyRoutes);
-app.use('/api/premium', authMiddleware, premiumRoutes);
-app.use('/api/triggers', authMiddleware, triggerRoutes);
-app.use('/api/claims', authMiddleware, claimRoutes);
-app.use("/api/payment", authMiddleware, paymentRoutes);
-app.use('/api/dashboard', authMiddleware, dashboardRoutes);
+app.use('/api/policies', requireAuth, policyRoutes);
+app.use('/api/premium', requireAuth, premiumRoutes);
+app.use('/api/triggers', requireAuth, triggerRoutes);
+app.use('/api/claims', requireAuth, claimRoutes);
+app.use("/api/payment", requireAuth, paymentRoutes);
+app.use('/api/dashboard', requireAuth, dashboardRoutes);
 
-app.get('/api/risk/:zone', authMiddleware, async (req, res) => {
+app.get('/api/risk/:zone', requireAuth, async (req, res) => {
   try {
     const riskScore = await getZoneRiskSnapshot({ zone: req.params.zone });
     res.json(riskScore);
