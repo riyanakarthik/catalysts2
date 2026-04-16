@@ -1,39 +1,47 @@
-const { PLAN_CONFIG, ZONE_RISK_MAP, PLATFORM_RELIABILITY } = require('../config/constants');
-const { getPredictiveRiskScore } = require('./mlService');
-const { getRealTimeEnvironmentalData } = require('./externalApiService');
+const {
+  PLAN_CONFIG,
+  PLATFORM_LOADING,
+  PLATFORM_RELIABILITY,
+  PREMIUM_RISK_MULTIPLIER
+} = require('../config/constants');
+const { getZoneRiskSnapshot } = require('./riskService');
 
-async function calculateWeeklyPremium(planType, zone, platform) {
-  const selectedPlan = PLAN_CONFIG[planType];
+async function calculateWeeklyPremium(user, zoneData) {
+  const selectedPlan = PLAN_CONFIG[user.planType];
   if (!selectedPlan) {
     throw new Error('Invalid plan type');
   }
 
-  const zoneRisk = ZONE_RISK_MAP[zone] || 'low';
-  const platformReliability = PLATFORM_RELIABILITY[platform] || 'stable';
+  const riskContext = await getZoneRiskSnapshot(user, zoneData);
+  const basePremium = selectedPlan.basePremium;
+  const riskMultiplier = PREMIUM_RISK_MULTIPLIER[riskContext.riskLevel] || 1;
+  const platformMultiplier = PLATFORM_LOADING[user.platform] || 1;
 
-  let premium = selectedPlan.basePremium;
-
-  // Base rules mapping manually assigned constants
-  if (zoneRisk === 'high') premium += 8;
-  if (zoneRisk === 'medium') premium += 4;
-  if (platformReliability === 'outage-prone') premium += 4;
-
-  // Real ML Integration: Dynamic Pricing Models utilizing simple-statistics Linear Regression
-  // Fetches live real-time API data and parses it through ML model
-  const currentEnvData = await getRealTimeEnvironmentalData(zone);
-  const aiInsights = await getPredictiveRiskScore(zone, currentEnvData);
-  premium += aiInsights.pricingAdjustment;
-
-  // Ensure premium doesn't drop below a minimum threshold
-  if (premium < 5) premium = 5;
+  const finalPremium = Math.max(
+    5,
+    Math.round(basePremium * riskMultiplier * platformMultiplier + (riskContext.riskScore * 12))
+  );
 
   return {
-    weeklyPremium: premium,
+    basePremium,
+    riskScore: riskContext.riskScore,
+    riskLevel: riskContext.riskLevel,
+    weeklyPremium: finalPremium,
+    finalPremium,
     maxWeeklyPayout: selectedPlan.maxWeeklyPayout,
-    zoneRisk,
-    platformReliability,
-    aiReasoning: aiInsights.aiReasoning, // Sending back the ML logic
-    riskIndex: aiInsights.riskIndex
+    zoneData: {
+      rainfall: riskContext.rainfall,
+      aqi: riskContext.aqi,
+      disruptionFrequency: riskContext.disruptionFrequency
+    },
+    pricingBreakdown: {
+      planType: user.planType,
+      zone: user.zone,
+      platform: user.platform,
+      platformReliability: PLATFORM_RELIABILITY[user.platform] || 'stable',
+      riskMultiplier,
+      platformMultiplier
+    }
   };
 }
 

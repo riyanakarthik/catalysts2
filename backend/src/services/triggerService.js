@@ -1,7 +1,8 @@
 const prisma = require('../prisma');
 const { PLAN_CONFIG, PAYOUT_PERCENTAGE } = require('../config/constants');
 const { initiateRazorpayPayout } = require('./payoutService');
-const { runFraudAssessment } = require('./fraudService');
+const { detectFraud } = require('./fraudService');
+const { getRealTimeEnvironmentalData, getPlatformOutageStatus } = require('./externalApiService');
 
 function calculatePayout(avgDailyEarnings, triggerType, maxWeeklyPayout) {
   const percentage = PAYOUT_PERCENTAGE[triggerType] || 0;
@@ -37,46 +38,13 @@ async function processTriggerClaims(triggerEvent) {
       continue;
     }
 
-    // ── FRAUD ASSESSMENT ──────────────────────────────────────────────
-    const fraudReport = await runFraudAssessment({
-      userId: policy.userId,
-      triggerType: triggerEvent.triggerType,
-      zone: triggerEvent.zone,
-      eventTime: triggerEvent.detectedAt || new Date(),
-    });
-
-    // If fraud score is too high, reject the claim
-    if (fraudReport.verdict === 'BLOCKED') {
-      console.warn(`[TriggerService] 🚫 Claim BLOCKED for user ${policy.userId} — fraud score ${fraudReport.overallScore.toFixed(3)}`);
-
-      const claim = await prisma.claim.create({
-        data: {
-          userId: policy.userId,
-          policyId: policy.id,
-          triggerEventId: triggerEvent.id,
-          payoutAmount: 0,
-          status: 'REJECTED'
-        }
-      });
-
-      createdClaims.push({ ...claim, fraudReport, blocked: true });
-      continue;
-    }
-
-    // If suspicious, log but still process (manual review queue in production)
-    if (fraudReport.verdict === 'SUSPICIOUS') {
-      console.warn(`[TriggerService] ⚠️ Claim flagged SUSPICIOUS for user ${policy.userId} — score ${fraudReport.overallScore.toFixed(3)}. Processing with flag.`);
-    }
-    // ──────────────────────────────────────────────────────────────────
-
     const payoutAmount = calculatePayout(
       policy.user.avgDailyEarnings,
       triggerEvent.triggerType,
       policy.maxWeeklyPayout
     );
 
-    // Create the claim
-    const claim = await prisma.claim.create({
+    let claim = await prisma.claim.create({
       data: {
         userId: policy.userId,
         policyId: policy.id,
@@ -86,7 +54,28 @@ async function processTriggerClaims(triggerEvent) {
       }
     });
 
-    // Initiate real Razorpay payout to the worker's UPI
+    const fraudReport = await detectFraud(policy, triggerEvent, claim);
+
+    claim = await prisma.claim.update({
+      where: { id: claim.id },
+      data: {
+        fraudFlag: fraudReport.isFraud,
+        fraudReason: fraudReport.fraudReason || null,
+        fraudRiskLevel: fraudReport.riskLevel,
+        status: fraudReport.isFraud ? 'REJECTED' : 'APPROVED',
+        payoutAmount: fraudReport.isFraud ? 0 : payoutAmount
+      }
+    });
+
+    if (fraudReport.isFraud) {
+      createdClaims.push({
+        ...claim,
+        fraudReport,
+        payout: null
+      });
+      continue;
+    }
+
     const payout = await initiateRazorpayPayout(
       policy.user,
       payoutAmount,
@@ -99,7 +88,58 @@ async function processTriggerClaims(triggerEvent) {
   return createdClaims;
 }
 
+function buildSeverity(triggerType, envData, isOutage) {
+  if (triggerType === 'OUTAGE' || isOutage) return 'high';
+  if (triggerType === 'RAIN') return envData.rainfall >= 18 ? 'high' : 'medium';
+  if (triggerType === 'AQI') return envData.aqi >= 250 ? 'high' : 'medium';
+  return 'low';
+}
+
+function evaluateTriggerThreshold(envData, isOutage) {
+  if (envData.rainfall >= 12) return 'RAIN';
+  if (envData.aqi >= 220) return 'AQI';
+  if (isOutage || envData.disruptionFrequency >= 8) return 'OUTAGE';
+  return null;
+}
+
+async function createAutomatedTriggerForZone(zone) {
+  const envData = await getRealTimeEnvironmentalData(zone);
+  const isOutage = await getPlatformOutageStatus();
+  const triggerType = evaluateTriggerThreshold(envData, isOutage);
+
+  if (!triggerType) {
+    return null;
+  }
+
+  const existingRecentEvent = await prisma.triggerEvent.findFirst({
+    where: {
+      zone,
+      triggerType,
+      detectedAt: {
+        gte: new Date(Date.now() - 60 * 1000)
+      }
+    }
+  });
+
+  if (existingRecentEvent) {
+    return null;
+  }
+
+  return prisma.triggerEvent.create({
+    data: {
+      triggerType,
+      zone,
+      severity: buildSeverity(triggerType, envData, isOutage),
+      source: 'automated-minute-evaluator',
+      rainfall: envData.rainfall,
+      aqi: envData.aqi,
+      disruptionFrequency: envData.disruptionFrequency
+    }
+  });
+}
+
 module.exports = {
+  calculatePayout,
   processTriggerClaims,
-  calculatePayout
+  createAutomatedTriggerForZone
 };
