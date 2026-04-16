@@ -35,7 +35,7 @@ app.use(cors({
 app.use(express.json());
 
 app.get('/health', (_, res) => {
-  res.json({ status: 'ok', app: 'Untitled backend' });
+  res.json({ status: 'ok', app: 'InsuriFyx backend' });
 });
 
 app.use('/api/users', userRoutes);
