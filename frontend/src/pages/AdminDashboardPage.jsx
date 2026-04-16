@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import api from '../api/client';
 import { getStoredUser } from '../api/auth';
+import { useLanguage } from '../i18n/LanguageContext';
 
 // ─── SVG Bar Chart ───────────────────────────────────────────────────────────
 function BarChart({ data, color = '#6366f1' }) {
@@ -98,6 +99,7 @@ function StatCard({ label, value, sub, accent = 'indigo' }) {
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 export default function AdminDashboardPage() {
+  const { t } = useLanguage();
   const [users, setUsers] = useState([]);
   const [claims, setClaims] = useState([]);
   const [triggerForm, setTriggerForm] = useState({ triggerType: 'RAIN', zone: 'Koramangala', severity: 'high' });
@@ -141,10 +143,11 @@ export default function AdminDashboardPage() {
   const totalPaidOut = claims.reduce((s, c) => s + (c.payoutAmount || 0), 0);
   const approvedClaims = claims.filter(c => c.status === 'APPROVED').length;
 
-  const triggerCounts = ['RAIN', 'AQI', 'OUTAGE'].map(t => ({
-    label: t,
-    value: claims.filter(c => c.triggerEvent?.triggerType === t).length
-  }));
+  const triggerCounts = [
+    { label: t('heavyRain'), value: claims.filter(c => c.triggerEvent?.triggerType === 'RAIN').length },
+    { label: t('aqiAlert'), value: claims.filter(c => c.triggerEvent?.triggerType === 'AQI').length },
+    { label: t('platformOutage'), value: claims.filter(c => c.triggerEvent?.triggerType === 'OUTAGE').length }
+  ];
 
   const platformCounts = [
     { label: 'Zomato', value: workers.filter(u => u.platform === 'ZOMATO').length },
@@ -163,12 +166,12 @@ export default function AdminDashboardPage() {
       <section className="rounded-[40px] border border-white/10 bg-white/5 p-8 backdrop-blur-xl shadow-2xl md:p-12">
         <div className="flex items-start justify-between flex-wrap gap-6">
           <div className="max-w-2xl">
-            <p className="text-xs font-bold uppercase tracking-[0.2em] text-indigo-400">Insurer Console</p>
+            <p className="text-xs font-bold uppercase tracking-[0.2em] text-indigo-400">{t('insurerConsole')}</p>
             <h2 className="mt-4 text-4xl font-black tracking-tight text-white md:text-5xl">
-               Operations center
+               {t('opsCenter')}
             </h2>
             <p className="mt-5 text-lg leading-relaxed text-white/50">
-              Simulate environmental triggers, monitor registered network activity, and track automated claim settlement flow.
+              {t('adminSubtitle')}
             </p>
           </div>
           <button
@@ -177,25 +180,25 @@ export default function AdminDashboardPage() {
             className="inline-flex items-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-5 py-3 text-sm font-bold text-white transition hover:bg-white/10 disabled:opacity-50"
           >
             <span className={`${refreshing ? 'animate-spin' : ''}`}>↻</span>
-            {refreshing ? 'Polling...' : 'Sync Live Data'}
+            {refreshing ? t('polling') : t('syncLiveData')}
           </button>
         </div>
 
         {/* SIMULATOR CONTROLS */}
         <div className="mt-12 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           <select className={inputClass} value={triggerForm.triggerType} onChange={e => setTriggerForm(p => ({ ...p, triggerType: e.target.value }))}>
-            <option value="RAIN">🌧 Heavy Rain</option>
-            <option value="AQI">😷 AQI Alert</option>
-            <option value="OUTAGE">⚡ Platform Outage</option>
+            <option value="RAIN">🌧 {t('heavyRain')}</option>
+            <option value="AQI">😷 {t('aqiAlert')}</option>
+            <option value="OUTAGE">⚡ {t('platformOutage')}</option>
           </select>
-          <input className={inputClass} value={triggerForm.zone} onChange={e => setTriggerForm(p => ({ ...p, zone: e.target.value }))} placeholder="Target Zone" />
+          <input className={inputClass} value={triggerForm.zone} onChange={e => setTriggerForm(p => ({ ...p, zone: e.target.value }))} placeholder={t('targetZone')} />
           <select className={inputClass} value={triggerForm.severity} onChange={e => setTriggerForm(p => ({ ...p, severity: e.target.value }))}>
-            <option value="low">Severity: Low</option>
-            <option value="medium">Severity: Medium</option>
-            <option value="high">Severity: High</option>
+            <option value="low">{t('severity')}: {t('low')}</option>
+            <option value="medium">{t('severity')}: {t('medium')}</option>
+            <option value="high">{t('severity')}: {t('high')}</option>
           </select>
           <button className="rounded-2xl bg-indigo-600 px-6 py-4 text-sm font-black uppercase tracking-widest text-white hover:bg-indigo-500 transition shadow-xl shadow-indigo-600/30 active:scale-95" onClick={simulate}>
-            Simulate Trigger
+            {t('simulateTrigger')}
           </button>
         </div>
         {message && <p className="mt-6 rounded-2xl border border-emerald-500/20 bg-emerald-500/10 px-6 py-4 text-sm font-bold text-emerald-400">{message}</p>}
@@ -203,10 +206,10 @@ export default function AdminDashboardPage() {
 
       {/* ANALYTICS ROW */}
       <section className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard label="Registered Workers" value={workers.length} sub="Total Enrollment" accent="indigo" />
-        <StatCard label="Active Policies" value={activePolicies} sub="Coverage In Force" accent="emerald" />
-        <StatCard label="Live Claims" value={claims.length} sub={`${approvedClaims} Status: Clear`} accent="amber" />
-        <StatCard label="Net Payout Flow" value={`₹${Math.round(totalPaidOut).toLocaleString()}`} sub="Automation Volume" accent="rose" />
+        <StatCard label={t('regWorkers')} value={workers.length} sub={t('networkDirectory')} accent="indigo" />
+        <StatCard label={t('statActivePolicies')} value={activePolicies} sub={t('inForce')} accent="emerald" />
+        <StatCard label={t('liveClaims')} value={claims.length} sub={`${approvedClaims} Status: Clear`} accent="amber" />
+        <StatCard label={t('netPayoutFlow')} value={`₹${Math.round(totalPaidOut).toLocaleString()}`} sub={t('automatedPayouts')} accent="rose" />
       </section>
 
       {/* CHARTS LAYER */}
@@ -214,8 +217,8 @@ export default function AdminDashboardPage() {
         {/* Claims by Trigger */}
         <div className="rounded-[40px] border border-white/10 bg-white/5 p-8 backdrop-blur-xl">
           <div className="mb-8">
-            <h3 className="text-sm font-black text-white/40 uppercase tracking-widest">Disruption Split</h3>
-            <p className="mt-1 text-xl font-black text-white">Claims by Category</p>
+            <h3 className="text-sm font-black text-white/40 uppercase tracking-widest">{t('disruptionSplit')}</h3>
+            <p className="mt-1 text-xl font-black text-white">{t('liveClaims')}</p>
           </div>
           <div>
             {claims.length === 0
@@ -227,8 +230,8 @@ export default function AdminDashboardPage() {
         {/* Platform Distribution */}
         <div className="rounded-[40px] border border-white/10 bg-white/5 p-8 backdrop-blur-xl">
           <div className="mb-8">
-            <h3 className="text-sm font-black text-white/40 uppercase tracking-widest">Network Share</h3>
-            <p className="mt-1 text-xl font-black text-white">Platform Enrollment</p>
+            <h3 className="text-sm font-black text-white/40 uppercase tracking-widest">{t('networkShare')}</h3>
+            <p className="mt-1 text-xl font-black text-white">{t('platform')}</p>
           </div>
           <div>
             {workers.length === 0
@@ -240,8 +243,8 @@ export default function AdminDashboardPage() {
         {/* Zone Distribution */}
         <div className="rounded-[40px] border border-white/10 bg-white/5 p-8 backdrop-blur-xl">
           <div className="mb-8">
-            <h3 className="text-sm font-black text-white/40 uppercase tracking-widest">Regional Density</h3>
-            <p className="mt-1 text-xl font-black text-white">Workers by Zone</p>
+            <h3 className="text-sm font-black text-white/40 uppercase tracking-widest">{t('regionalDensity')}</h3>
+            <p className="mt-1 text-xl font-black text-white">{t('zone')}</p>
           </div>
           <div>
             {zoneCounts.length === 0
@@ -256,16 +259,16 @@ export default function AdminDashboardPage() {
         
         {/* WORKERS TABLE */}
         <section className="rounded-[40px] border border-white/10 bg-white/5 p-10 backdrop-blur-xl overflow-hidden">
-          <h3 className="text-2xl font-black text-white px-2">Network directory</h3>
+          <h3 className="text-2xl font-black text-white px-2">{t('networkDirectory')}</h3>
           <div className="mt-8 overflow-auto rounded-3xl border border-white/5">
             <table className="w-full min-w-[760px] text-sm text-left">
               <thead className="bg-white/5 text-[10px] uppercase font-black tracking-widest text-white/40">
                 <tr>
-                  <th className="px-6 py-5">Verified Name</th>
-                  <th className="px-6 py-5">Platform</th>
-                  <th className="px-6 py-5">Current Zone</th>
-                  <th className="px-6 py-5">Earnings (avg)</th>
-                  <th className="px-6 py-5 text-right">In Force</th>
+                  <th className="px-6 py-5">{t('verifiedName')}</th>
+                  <th className="px-6 py-5">{t('platform')}</th>
+                  <th className="px-6 py-5">{t('zone')}</th>
+                  <th className="px-6 py-5">{t('avgDailyEarnings')}</th>
+                  <th className="px-6 py-5 text-right">{t('inForce')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/5 text-white/70">
@@ -277,7 +280,7 @@ export default function AdminDashboardPage() {
                     <td className="px-6 py-5 font-mono">₹{u.avgDailyEarnings}</td>
                     <td className="px-6 py-5 text-right">
                       <span className={`inline-flex px-2 py-1 rounded text-[10px] font-black ${u.policies?.some(p=>p.status==='ACTIVE') ? 'bg-emerald-500/10 text-emerald-400' : 'bg-white/5 text-white/20'}`}>
-                        {u.policies?.filter(p => p.status === 'ACTIVE').length || 0} ACTIVE
+                        {u.policies?.filter(p => p.status === 'ACTIVE').length || 0} {t('statusActive').split(':')[1]?.trim().split(' ')[0]}
                       </span>
                     </td>
                   </tr>
@@ -292,17 +295,17 @@ export default function AdminDashboardPage() {
 
         {/* CLAIMS TABLE */}
         <section className="rounded-[40px] border border-white/10 bg-white/5 p-10 backdrop-blur-xl overflow-hidden">
-          <h3 className="text-2xl font-black text-white px-2">Settlement feed</h3>
+          <h3 className="text-2xl font-black text-white px-2">{t('settlementFeed')}</h3>
           <div className="mt-8 overflow-auto rounded-3xl border border-white/5">
             <table className="w-full min-w-[950px] text-sm text-left">
               <thead className="bg-white/5 text-[10px] uppercase font-black tracking-widest text-white/40">
                 <tr>
-                  <th className="px-6 py-5">Claim ID</th>
-                  <th className="px-6 py-5">Worker Entity</th>
-                  <th className="px-6 py-5">Trigger Type</th>
-                  <th className="px-6 py-5">Volume</th>
-                  <th className="px-6 py-5">Logic Status</th>
-                  <th className="px-6 py-5 text-right">Payout state</th>
+                  <th className="px-6 py-5">{t('claimId')}</th>
+                  <th className="px-6 py-5">{t('workerEntity')}</th>
+                  <th className="px-6 py-5">{t('triggerHistory').split(' ')[0]}</th>
+                  <th className="px-6 py-5">{t('volume')}</th>
+                  <th className="px-6 py-5">{t('logicStatus')}</th>
+                  <th className="px-6 py-5 text-right">{t('payoutState')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/5 text-white/70">

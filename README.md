@@ -1,8 +1,8 @@
-# GigShield: AI-Powered Parametric Income Insurance 🛡️
+# InsuriFyx: AI-Powered Parametric Income Insurance 🛡️
 
 **Protecting the Backbone of India's Platform Economy.**
 
-GigShield is a cutting-edge parametric insurance solution designed specifically for food delivery partners (Zomato, Swiggy, etc.). Unlike traditional insurance, GigShield uses real-time data and AI to automatically detect income-disrupting events—such as extreme weather, platform outages, or civic restrictions—and issues instant payouts without the need for manual claims.
+InsuriFyx is a cutting-edge parametric insurance solution designed specifically for food delivery partners (Zomato, Swiggy, etc.). Unlike traditional insurance, InsuriFyx uses real-time data and AI to automatically detect income-disrupting events—such as extreme weather, platform outages, or civic restrictions—and issues instant payouts without the need for manual claims.
 
 ---
 
@@ -58,7 +58,7 @@ Payouts are initiated when thresholds are crossed according to independent data 
 A **Gradient Boosted Regression** model ingests historical zone data and 7-day forecasts to produce a risk score. Premiums are weighted more heavily for disruptions during peak window (7–10 PM), reflecting the actual income concentration of gig workers.
 
 ### 2. Fraud & Anti-Spoofing
-To defend against GPS spoofing syndicates, GigShield uses a multi-signal verification layer:
+To defend against GPS spoofing syndicates, InsuriFyx uses a multi-signal verification layer:
 - **GPS Physics**: Detection of unnaturally static drift or impossible velocity spikes.
 - **Network Triangulation**: Corroborating GPS with mobile carrier tower data.
 - **Device Sensors**: Validating "on-the-move" accelerometer patterns via the browser's Device Motion API.
@@ -104,7 +104,7 @@ To defend against GPS spoofing syndicates, GigShield uses a multi-signal verific
 
 ## 🌍 Mission & Impact
 
-In India, a single disrupted evening shift can wipe out 20-30% of a delivery partner's weekly income. This isn't just about "rain"—it's about the hours a worker never gets the chance to work. GigShield aims to bridge this gap by providing an automated, trustless safety net that respects the time and effort of the gig workforce.
+In India, a single disrupted evening shift can wipe out 20-30% of a delivery partner's weekly income. This isn't just about "rain"—it's about the hours a worker never gets the chance to work. InsuriFyx aims to bridge this gap by providing an automated, trustless safety net that respects the time and effort of the gig workforce.
 
 ---
 

@@ -1,27 +1,30 @@
 import { useNavigate } from "react-router-dom";
 import Logo from "../components/Logo";
-
-const features = [
-  { icon: "⚡", title: "Zero-Touch Claims", desc: "AI detects disruptions and auto-approves payouts — no forms, no waiting." },
-  { icon: "🧠", title: "AI-Driven Pricing", desc: "Dynamic weekly premiums calculated using hyper-local risk & weather models." },
-  { icon: "📡", title: "Live Trigger Engine", desc: "Rain, AQI spikes, platform outages — 3+ automated triggers running 24/7." },
-  { icon: "💸", title: "Instant UPI Payout", desc: "Approved claims are settled directly to your UPI ID within minutes." },
-];
-
-const stats = [
-  { value: "₹0", label: "Forms to fill" },
-  { value: "3+", label: "Trigger types" },
-  { value: "100%", label: "Automated payouts" },
-  { value: "24/7", label: "Monitoring" },
-];
+import LanguageSwitcher from "../components/LanguageSwitcher";
+import { useLanguage } from "../i18n/LanguageContext";
 
 export default function WelcomePage() {
   const navigate = useNavigate();
+  const { t } = useLanguage();
 
   const go = (role, path) => {
     localStorage.setItem("selectedRole", role);
     navigate(path);
   };
+
+  const features = [
+    { icon: "⚡", title: t('feat1Title'), desc: t('feat1Desc') },
+    { icon: "🧠", title: t('feat2Title'), desc: t('feat2Desc') },
+    { icon: "📡", title: t('feat3Title'), desc: t('feat3Desc') },
+    { icon: "💸", title: t('feat4Title'), desc: t('feat4Desc') },
+  ];
+
+  const stats = [
+    { value: "₹0", label: t('formsToFill') },
+    { value: "3+", label: t('triggerTypes') },
+    { value: "100%", label: t('automatedPayouts') },
+    { value: "24/7", label: t('monitoring') },
+  ];
 
   return (
     <div className="min-h-screen bg-[#0a0a0f] text-white overflow-x-hidden">
@@ -35,22 +38,25 @@ export default function WelcomePage() {
 
       {/* NAV */}
       <nav className="relative z-10 flex items-center justify-between px-8 py-6 md:px-16">
-        <div className="flex items-center gap-3">
-          <Logo size={36} />
-          <span className="text-xl font-extrabold tracking-tight">GigShield</span>
+        <div className="flex items-center gap-6">
+          <div className="flex items-center gap-3">
+            <Logo size={36} />
+            <span className="text-xl font-extrabold tracking-tight">{t('appName')}</span>
+          </div>
+          <LanguageSwitcher />
         </div>
         <div className="flex items-center gap-3">
           <button
             onClick={() => go("WORKER", "/login")}
             className="rounded-xl px-5 py-2.5 text-sm font-semibold text-white/80 hover:text-white transition"
           >
-            Sign In
+            {t('signIn')}
           </button>
           <button
             onClick={() => go("WORKER", "/register")}
             className="rounded-xl bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-indigo-500 transition shadow-lg shadow-indigo-500/30"
           >
-            Get Started
+            {t('getStarted')}
           </button>
         </div>
       </nav>
@@ -63,20 +69,19 @@ export default function WelcomePage() {
             <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-indigo-400 opacity-75" />
             <span className="relative inline-flex h-2 w-2 rounded-full bg-indigo-500" />
           </span>
-          AI-Powered Parametric Income Insurance · Live
+          {t('heroBadge')}
         </div>
 
         <h1 className="text-5xl font-black leading-[1.1] tracking-tight sm:text-6xl md:text-7xl">
-          Income protection for
+          {t('heroTitle1')}
           <br />
           <span className="bg-gradient-to-r from-indigo-400 via-violet-400 to-blue-400 bg-clip-text text-transparent">
-            gig workers
+            {t('heroTitle2')}
           </span>
         </h1>
 
         <p className="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-white/60 md:text-xl">
-          GigShield monitors weather, air quality, and platform disruptions in real time.
-          When income is lost — claims are auto-approved and paid, instantly.
+          {t('heroSubtitle')}
         </p>
 
         {/* CTA Buttons */}
@@ -85,31 +90,31 @@ export default function WelcomePage() {
             onClick={() => go("WORKER", "/register")}
             className="group inline-flex items-center gap-2 rounded-2xl bg-indigo-600 px-8 py-4 text-base font-bold text-white shadow-xl shadow-indigo-500/30 transition hover:bg-indigo-500 hover:shadow-indigo-500/50 hover:-translate-y-0.5"
           >
-            Register as Worker
+            {t('registerWorker')}
             <span className="transition-transform group-hover:translate-x-1">→</span>
           </button>
           <button
             onClick={() => go("ADMIN", "/register")}
             className="inline-flex items-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-8 py-4 text-base font-bold text-white backdrop-blur-sm transition hover:border-white/20 hover:bg-white/10 hover:-translate-y-0.5"
           >
-            Register as Insurer
+            {t('registerInsurer')}
           </button>
         </div>
 
         <p className="mt-5 text-sm text-white/40">
-          Already have an account?{" "}
+          {t('alreadyHaveAccount')}{" "}
           <span
             className="cursor-pointer text-indigo-400 hover:underline"
             onClick={() => go("WORKER", "/login")}
           >
-            Sign in as Worker
+            {t('signInWorker')}
           </span>{" "}
           ·{" "}
           <span
             className="cursor-pointer text-slate-400 hover:underline"
             onClick={() => go("ADMIN", "/login")}
           >
-            Sign in as Insurer
+            {t('signInInsurer')}
           </span>
         </p>
       </section>
@@ -128,9 +133,9 @@ export default function WelcomePage() {
 
       {/* FEATURE CARDS */}
       <section className="relative z-10 mx-auto max-w-5xl px-8 py-24 md:px-16">
-        <p className="text-center text-sm font-bold uppercase tracking-widest text-indigo-400">How it works</p>
+        <p className="text-center text-sm font-bold uppercase tracking-widest text-indigo-400">{t('howItWorks')}</p>
         <h2 className="mt-3 text-center text-4xl font-extrabold tracking-tight">
-          Parametric insurance, reimagined
+          {t('howItWorksTitle')}
         </h2>
 
         <div className="mt-12 grid gap-5 sm:grid-cols-2">
@@ -154,16 +159,16 @@ export default function WelcomePage() {
         <div className="rounded-[32px] border border-indigo-500/20 bg-gradient-to-br from-indigo-600/20 to-violet-600/10 p-12 backdrop-blur-sm">
           <Logo size={48} className="mx-auto mb-5" />
           <h2 className="text-3xl font-extrabold tracking-tight md:text-4xl">
-            Ready to get protected?
+            {t('readyToProtect')}
           </h2>
           <p className="mx-auto mt-4 max-w-md text-white/60">
-            Join GigShield today and let AI handle your income protection automatically.
+            {t('readyCta')}
           </p>
           <button
             onClick={() => go("WORKER", "/register")}
             className="mt-8 inline-flex rounded-2xl bg-indigo-600 px-10 py-4 text-base font-bold text-white shadow-xl shadow-indigo-500/30 transition hover:bg-indigo-500 hover:-translate-y-0.5"
           >
-            Start for free →
+            {t('startFree')}
           </button>
         </div>
       </section>
@@ -172,9 +177,9 @@ export default function WelcomePage() {
       <footer className="relative z-10 border-t border-white/5 px-8 py-8 text-center text-sm text-white/25 md:px-16">
         <div className="flex items-center justify-center gap-2 mb-2">
           <Logo size={16} />
-          <span className="font-semibold text-white/40">GigShield</span>
+          <span className="font-semibold text-white/40">{t('appName')}</span>
         </div>
-        AI-powered parametric income insurance for gig workers
+        {t('footerText')}
       </footer>
     </div>
   );

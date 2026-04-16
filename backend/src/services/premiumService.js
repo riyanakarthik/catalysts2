@@ -1,5 +1,6 @@
 const { PLAN_CONFIG, ZONE_RISK_MAP, PLATFORM_RELIABILITY } = require('../config/constants');
-const { getPredictiveRiskScore } = require('./mockAiService');
+const { getPredictiveRiskScore } = require('./mlService');
+const { getRealTimeEnvironmentalData } = require('./externalApiService');
 
 async function calculateWeeklyPremium(planType, zone, platform) {
   const selectedPlan = PLAN_CONFIG[planType];
@@ -17,9 +18,10 @@ async function calculateWeeklyPremium(planType, zone, platform) {
   if (zoneRisk === 'medium') premium += 4;
   if (platformReliability === 'outage-prone') premium += 4;
 
-  // AI Integration Example: Dynamic Pricing Models utilizing Mock ML API
-  // Adjusts the weekly premium directly matching predictive hyper-local risk indexing
-  const aiInsights = await getPredictiveRiskScore(zone);
+  // Real ML Integration: Dynamic Pricing Models utilizing simple-statistics Linear Regression
+  // Fetches live real-time API data and parses it through ML model
+  const currentEnvData = await getRealTimeEnvironmentalData(zone);
+  const aiInsights = await getPredictiveRiskScore(zone, currentEnvData);
   premium += aiInsights.pricingAdjustment;
 
   // Ensure premium doesn't drop below a minimum threshold
@@ -30,7 +32,8 @@ async function calculateWeeklyPremium(planType, zone, platform) {
     maxWeeklyPayout: selectedPlan.maxWeeklyPayout,
     zoneRisk,
     platformReliability,
-    aiReasoning: aiInsights.aiReasoning // Sending back the AI logic for potential frontend displays!
+    aiReasoning: aiInsights.aiReasoning, // Sending back the ML logic
+    riskIndex: aiInsights.riskIndex
   };
 }
 

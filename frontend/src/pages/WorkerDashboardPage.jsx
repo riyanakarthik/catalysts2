@@ -4,8 +4,11 @@ import { getStoredUser } from '../api/auth';
 import PolicyCard from '../components/PolicyCard';
 import ClaimCard from '../components/ClaimCard';
 import Spinner from '../components/Spinner';
+import RiskRadar from '../components/RiskRadar';
+import { useLanguage } from '../i18n/LanguageContext';
 
 export default function WorkerDashboardPage() {
+  const { t } = useLanguage();
   const [policies, setPolicies] = useState([]);
   const [claims, setClaims] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -49,12 +52,12 @@ export default function WorkerDashboardPage() {
       <section className="rounded-[40px] border border-white/10 bg-white/5 p-8 backdrop-blur-xl shadow-2xl md:p-12">
         <div className="flex items-start justify-between flex-wrap gap-6">
           <div className="max-w-2xl">
-            <p className="text-xs font-bold uppercase tracking-[0.2em] text-indigo-400">Worker Dashboard</p>
+            <p className="text-xs font-bold uppercase tracking-[0.2em] text-indigo-400">{t('workerDashboard')}</p>
             <h2 className="mt-4 text-4xl font-black tracking-tight text-white md:text-5xl">
-              Welcome back, {user?.fullName?.split(' ')[0] || 'Worker'}! 
+              {t('welcomeBackUser')} {user?.fullName?.split(' ')[0] || 'Worker'}! 
             </h2>
             <p className="mt-5 text-lg leading-relaxed text-white/50">
-              Review your active coverage, monitor trigger events, and track automated payouts in real-time.
+              {t('dashboardSubtitle')}
             </p>
           </div>
           <button
@@ -63,7 +66,7 @@ export default function WorkerDashboardPage() {
             className="inline-flex items-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-5 py-3 text-sm font-bold text-white transition hover:bg-white/10 disabled:opacity-50"
           >
             <span className={`transition-transform duration-500 ${refreshing ? 'animate-spin' : ''}`}>↻</span>
-            {refreshing ? 'Refreshing...' : 'Refresh Feed'}
+            {refreshing ? t('refreshing') : t('refreshFeed')}
           </button>
         </div>
 
@@ -71,10 +74,10 @@ export default function WorkerDashboardPage() {
         {user && (
           <div className="mt-10 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
             {[
-              { label: 'Network Platform', value: user.platform || '—' },
-              { label: 'Active Zone', value: user.city && user.zone ? `${user.city}, ${user.zone}` : '—' },
-              { label: 'Daily Earnings', value: user.avgDailyEarnings ? `₹${user.avgDailyEarnings}` : '—' },
-              { label: 'UPI Linked', value: user.upiId || '—' },
+              { label: t('networkPlatform'), value: user.platform || '—' },
+              { label: t('activeZone'), value: user.city && user.zone ? `${user.city}, ${user.zone}` : '—' },
+              { label: t('dailyEarnings'), value: user.avgDailyEarnings ? `₹${user.avgDailyEarnings}` : '—' },
+              { label: t('upiLinked'), value: user.upiId || '—' },
             ].map(({ label, value }) => (
               <div key={label} className="rounded-2xl border border-white/5 bg-white/[0.03] p-6">
                 <p className="text-[10px] font-bold uppercase tracking-widest text-indigo-400/60">{label}</p>
@@ -93,11 +96,14 @@ export default function WorkerDashboardPage() {
           }`}>
             <span className={`h-2 w-2 rounded-full ${activePolicy ? 'bg-emerald-500 animate-pulse' : 'bg-amber-400'}`} />
             {activePolicy
-              ? `Status: ACTIVE COVERAGE (${activePolicy.planType})`
-              : 'Status: NO ACTIVE POLICY FOUND'}
+              ? `${t('statusActive')} (${activePolicy.planType})`
+              : t('statusInactive')}
           </div>
         )}
       </section>
+
+      {/* AI RISK RADAR (NEW) */}
+      <RiskRadar />
 
       {/* TWO COLUMN CONTENT */}
       <div className="grid gap-10 lg:grid-cols-[1fr_1.2fr]">
@@ -105,17 +111,17 @@ export default function WorkerDashboardPage() {
         {/* POLICIES SECTION */}
         <section className="rounded-[40px] border border-white/10 bg-white/5 p-8 backdrop-blur-xl shadow-2xl">
           <div className="mb-8">
-            <h3 className="text-2xl font-black text-white">Active Protection</h3>
-            <p className="text-sm text-white/40 mt-1">Your current and past insurance plans.</p>
+            <h3 className="text-2xl font-black text-white">{t('activeProtection')}</h3>
+            <p className="text-sm text-white/40 mt-1">{t('activeProtectionDesc')}</p>
           </div>
           
           {loading ? (
-            <Spinner label="Loading policies..." />
+            <Spinner label={t('loading')} />
           ) : policies.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 text-center">
               <div className="mb-4 text-5xl">🛡️</div>
-              <p className="font-bold text-white">No policies yet</p>
-              <p className="mt-2 text-xs text-white/30 leading-relaxed max-w-[200px]">Activate a plan from the Selection page to get covered.</p>
+              <p className="font-bold text-white">{t('noPolicies')}</p>
+              <p className="mt-2 text-xs text-white/30 leading-relaxed max-w-[200px]">{t('noPoliciesDesc')}</p>
             </div>
           ) : (
             <div className="grid gap-5">
@@ -129,17 +135,17 @@ export default function WorkerDashboardPage() {
         {/* CLAIMS SECTION */}
         <section className="rounded-[40px] border border-white/10 bg-white/5 p-8 backdrop-blur-xl shadow-2xl">
           <div className="mb-8">
-            <h3 className="text-2xl font-black text-white">Trigger History</h3>
-            <p className="text-sm text-white/40 mt-1">Automated payouts from environmental triggers.</p>
+            <h3 className="text-2xl font-black text-white">{t('triggerHistory')}</h3>
+            <p className="text-sm text-white/40 mt-1">{t('triggerHistoryDesc')}</p>
           </div>
 
           {loading ? (
-            <Spinner label="Loading claims..." />
+            <Spinner label={t('loading')} />
           ) : claims.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 text-center">
               <div className="mb-4 text-5xl">📋</div>
-              <p className="font-bold text-white">No claims recorded</p>
-              <p className="mt-2 text-xs text-white/30 leading-relaxed max-w-[200px]">Claims appear automatically when a trigger hits your zone.</p>
+              <p className="font-bold text-white">{t('noClaims')}</p>
+              <p className="mt-2 text-xs text-white/30 leading-relaxed max-w-[200px]">{t('noClaimsDesc')}</p>
             </div>
           ) : (
             <div className="grid gap-5">

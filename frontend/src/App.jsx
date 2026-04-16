@@ -1,4 +1,5 @@
 import { BrowserRouter, Route, Routes } from 'react-router-dom';
+import { LanguageProvider } from './i18n/LanguageContext';
 
 import Layout from './components/Layout';
 import WelcomePage from './pages/WelcomePage';
@@ -12,56 +13,54 @@ import ProtectedRoute from "./components/ProtectedRoute";
 
 export default function App() {
   return (
-    <BrowserRouter>
-      <Routes>
+    <LanguageProvider>
+      <BrowserRouter>
+        <Routes>
+          {/* Public */}
+          <Route path="/" element={<WelcomePage />} />
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/register" element={<RegistrationPage />} />
 
-        {/* Public */}
-        <Route path="/" element={<WelcomePage />} />
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/register" element={<RegistrationPage />} />
+          {/* Protected + Layout */}
+          <Route element={<Layout />}>
+            <Route
+              path="/plan"
+              element={
+                <ProtectedRoute allowedRoles={['WORKER']}>
+                  <PlanSelectionPage />
+                </ProtectedRoute>
+              }
+            />
 
-        {/* Protected + Layout */}
-        <Route element={<Layout />}>
+            <Route
+              path="/worker"
+              element={
+                <ProtectedRoute allowedRoles={['WORKER']}>
+                  <WorkerDashboardPage />
+                </ProtectedRoute>
+              }
+            />
 
-          <Route
-            path="/plan"
-            element={
-              <ProtectedRoute allowedRoles={['WORKER']}>
-                <PlanSelectionPage />
-              </ProtectedRoute>
-            }
-          />
+            <Route
+              path="/claims"
+              element={
+                <ProtectedRoute allowedRoles={['WORKER', 'ADMIN']}>
+                  <ClaimsListPage />
+                </ProtectedRoute>
+              }
+            />
 
-          <Route
-            path="/worker"
-            element={
-              <ProtectedRoute allowedRoles={['WORKER']}>
-                <WorkerDashboardPage />
-              </ProtectedRoute>
-            }
-          />
-
-          <Route
-            path="/claims"
-            element={
-              <ProtectedRoute allowedRoles={['WORKER', 'ADMIN']}>
-                <ClaimsListPage />
-              </ProtectedRoute>
-            }
-          />
-
-          <Route
-            path="/admin"
-            element={
-              <ProtectedRoute allowedRoles={['ADMIN']}>
-                <AdminDashboardPage />
-              </ProtectedRoute>
-            }
-          />
-
-        </Route> {/* 🔥 THIS WAS MISSING */}
-
-      </Routes>
-    </BrowserRouter>
+            <Route
+              path="/admin"
+              element={
+                <ProtectedRoute allowedRoles={['ADMIN']}>
+                  <AdminDashboardPage />
+                </ProtectedRoute>
+              }
+            />
+          </Route>
+        </Routes>
+      </BrowserRouter>
+    </LanguageProvider>
   );
 }

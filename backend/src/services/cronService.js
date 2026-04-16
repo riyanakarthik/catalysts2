@@ -1,47 +1,70 @@
 // cronService.js
 // Automated background polling engine.
-// Mimics 3-5 different external trigger APIs (OpenWeather, AQI Tracker, Platform Outage, etc.)
-// and auto-fires claims without any manual admin intervention.
+// Uses real Open-Meteo APIs to check environment and trigger claims.
 
 const prisma = require('../prisma');
-const { checkEnvironmentalTriggers } = require('./mockAiService');
+const { getRealTimeEnvironmentalData, getPlatformOutageStatus, ZONE_COORDINATES } = require('./externalApiService');
 const { processTriggerClaims } = require('./triggerService');
 
 const POLL_INTERVAL_MS = 60 * 1000; // Poll every 60 seconds
 
 async function runTriggerCheck() {
   try {
-    console.log('[CronService] 🔍 Running automated trigger check via ML monitoring feeds...');
+    console.log('[CronService] 🔍 Running automated trigger check via Real-time APIs...');
 
-    const event = await checkEnvironmentalTriggers();
+    const zones = Object.keys(ZONE_COORDINATES);
+    let anomalyDetected = false;
 
-    if (!event) {
-      console.log('[CronService] ✅ All clear — no anomalies detected.');
-      return;
+    for (const zone of zones) {
+      // 1. Fetch real environment data
+      const envData = await getRealTimeEnvironmentalData(zone);
+      const isOutage = await getPlatformOutageStatus();
+
+      let triggerType = null;
+      let severity = 'low';
+
+      // 2. Evaluate Triggers (Parametric thresholds)
+      if (envData.rain > 15) {
+        triggerType = 'RAIN'; severity = 'high';
+      } else if (envData.rain > 0 && Math.random() < 0.1) {
+        // Mock heavy rain occasionally for demo purposes if it's lightly raining
+        triggerType = 'RAIN'; severity = 'medium';
+      } else if (envData.aqi > 300) {
+        triggerType = 'AQI'; severity = 'high';
+      } else if (isOutage) {
+        triggerType = 'OUTAGE'; severity = 'high';
+      }
+
+      if (triggerType) {
+        anomalyDetected = true;
+        console.log(`[CronService] ⚡ Anomaly detected! Type: ${triggerType}, Zone: ${zone}, Severity: ${severity} (Rain: ${envData.rain}mm, AQI: ${envData.aqi})`);
+
+        // Persist the trigger event
+        const triggerEvent = await prisma.triggerEvent.create({
+          data: {
+            triggerType: triggerType,
+            zone: zone,
+            severity: severity,
+            source: 'Open-Meteo & External Monitors'
+          }
+        });
+
+        // Zero-touch claims processing
+        const generatedClaims = await processTriggerClaims(triggerEvent);
+
+        if (generatedClaims.length > 0) {
+          console.log(`[CronService] 💰 Auto-generated ${generatedClaims.length} claim(s) with immediate APPROVED status.`);
+          generatedClaims.forEach(claim => {
+            console.log(`   → Claim #${claim.id} | ₹${claim.payoutAmount} | UPI Payout PROCESSED`);
+          });
+        } else {
+          console.log(`[CronService] ℹ️ Trigger created but no matching active policies found in zone '${zone}'.`);
+        }
+      }
     }
 
-    console.log(`[CronService] ⚡ Anomaly detected! Type: ${event.triggerType}, Zone: ${event.zone}, Severity: ${event.severity}`);
-
-    // Persist the trigger event
-    const triggerEvent = await prisma.triggerEvent.create({
-      data: {
-        triggerType: event.triggerType,
-        zone: event.zone,
-        severity: event.severity,
-        source: event.source
-      }
-    });
-
-    // Zero-touch claims processing
-    const generatedClaims = await processTriggerClaims(triggerEvent);
-
-    if (generatedClaims.length > 0) {
-      console.log(`[CronService] 💰 Auto-generated ${generatedClaims.length} claim(s) with immediate APPROVED status.`);
-      generatedClaims.forEach(claim => {
-        console.log(`   → Claim #${claim.id} | ₹${claim.payoutAmount} | UPI Payout PROCESSED`);
-      });
-    } else {
-      console.log(`[CronService] ℹ️ Trigger created but no matching active policies found in zone '${event.zone}'.`);
+    if (!anomalyDetected) {
+      console.log('[CronService] ✅ All clear — no anomalies detected across zones.');
     }
 
   } catch (err) {
@@ -50,8 +73,8 @@ async function runTriggerCheck() {
 }
 
 function initCronJobs() {
-  console.log(`[CronService] 🚀 Automated AI Trigger Engine started — polling every ${POLL_INTERVAL_MS / 1000}s`);
-  console.log('[CronService] 📡 Monitoring: RAIN, AQI, PLATFORM OUTAGE triggers across all zones');
+  console.log(`[CronService] 🚀 Automated Core Trigger Engine started — polling every ${POLL_INTERVAL_MS / 1000}s`);
+  console.log('[CronService] 📡 Connected to Open-Meteo for realtime Weather & AQI');
 
   // Fire once immediately after startup for quick demo visibility
   runTriggerCheck();

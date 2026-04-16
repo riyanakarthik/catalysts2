@@ -1,8 +1,15 @@
 const prisma = require('../prisma');
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
+const { isVelocityAnomalous, verifyDeviceSensors } = require('../services/fraudService');
 
 const allowedPlatforms = ['ZOMATO', 'SWIGGY'];
+
+// Password: min 8 chars, at least 1 uppercase, 1 lowercase, 1 digit, 1 special char
+const PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_\-+={}\[\]|:;"'<>,.?/~`])[A-Za-z\d!@#$%^&*()_\-+={}\[\]|:;"'<>,.?/~`]{8,}$/;
+
+// UPI ID: alphanumeric/dots before @, then provider name
+const UPI_REGEX = /^[a-zA-Z0-9.\-_]{3,}@[a-zA-Z]{2,}$/;
 
 async function registerUser(req, res) {
   try {
@@ -29,9 +36,20 @@ if (!fullName || !phone || !password) {
   return res.status(400).json({ message: 'Basic fields required.' });
 }
 
+if (!PASSWORD_REGEX.test(password)) {
+  return res.status(400).json({
+    message: 'Password must be at least 8 characters with 1 uppercase, 1 lowercase, 1 digit, and 1 special character.'
+  });
+}
+
 if (normalizedRole === "WORKER") {
   if (!platform || !city || !zone || !avgDailyEarnings || !upiId) {
     return res.status(400).json({ message: 'Worker fields required.' });
+  }
+  if (!UPI_REGEX.test(upiId)) {
+    return res.status(400).json({
+      message: 'Invalid UPI ID. Must be in format: username@provider (e.g. john@oksbi)'
+    });
   }
 }
 
@@ -170,9 +188,28 @@ async function deleteUser(req, res) {
   }
 }
 
+async function verifyLocation(req, res) {
+  try {
+    const { locationHistory, sensorData } = req.body;
+    
+    if (isVelocityAnomalous(locationHistory)) {
+      return res.status(403).json({ message: 'Fraud Detected: Anomalous velocity (GPS Spoofing).', isFraud: true });
+    }
+
+    if (!verifyDeviceSensors(sensorData)) {
+       return res.status(403).json({ message: 'Fraud Detected: Sensor mismatch (Emulator).', isFraud: true });
+    }
+
+    return res.json({ message: 'Location verified successfully.', isFraud: false });
+  } catch (error) {
+    return res.status(500).json({ message: 'Location verification failed.' });
+  }
+}
+
 module.exports = {
   registerUser,
   getUsers,
   loginUser, 
-  deleteUser
+  deleteUser,
+  verifyLocation
 };

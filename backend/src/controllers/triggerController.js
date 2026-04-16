@@ -1,5 +1,6 @@
 const prisma = require('../prisma');
 const { processTriggerClaims } = require('../services/triggerService');
+const { runFraudAssessment } = require('../services/fraudService');
 
 async function simulateTrigger(req, res) {
   try {
@@ -27,6 +28,31 @@ async function simulateTrigger(req, res) {
   }
 }
 
+/**
+ * Run a standalone fraud check on a specific user
+ * Useful for admin dashboard / manual review
+ */
+async function fraudCheck(req, res) {
+  try {
+    const { userId, triggerType, zone, locationHistory, sensorData } = req.body;
+
+    const report = await runFraudAssessment({
+      userId: Number(userId),
+      triggerType: triggerType || 'RAIN',
+      zone: zone || 'Koramangala',
+      eventTime: new Date(),
+      locationHistory,
+      sensorData
+    });
+
+    return res.json(report);
+  } catch (error) {
+    console.error('fraudCheck error', error);
+    return res.status(500).json({ message: 'Fraud check failed', error: error.message });
+  }
+}
+
 module.exports = {
-  simulateTrigger
+  simulateTrigger,
+  fraudCheck
 };

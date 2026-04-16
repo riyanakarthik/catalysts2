@@ -4,8 +4,11 @@ import api from "../api/client";
 import { saveSession } from "../api/auth";
 import AmbientBackground from "../components/AmbientBackground";
 import Logo from "../components/Logo";
+import LanguageSwitcher from "../components/LanguageSwitcher";
+import { useLanguage } from "../i18n/LanguageContext";
 
 export default function LoginPage() {
+  const { t } = useLanguage();
   const [form, setForm] = useState({
     phone: "",
     password: "",
@@ -44,26 +47,30 @@ export default function LoginPage() {
     <div className="relative min-h-screen">
       <AmbientBackground />
       
-      <div className="relative flex min-h-screen items-center justify-center px-6">
+      <div className="relative flex min-h-screen flex-col items-center justify-center px-6">
+        <div className="mb-6">
+           <LanguageSwitcher />
+        </div>
+        
         <div className="w-full max-w-md">
           <div className="mb-10 text-center">
             <Logo size={48} className="mx-auto mb-4" />
-            <h1 className="text-3xl font-black tracking-tight text-white">Welcome back</h1>
-            <p className="mt-2 text-sm text-white/50">Enter your credentials to access your dashboard</p>
+            <h1 className="text-3xl font-black tracking-tight text-white">{t('welcomeBack')}</h1>
+            <p className="mt-2 text-sm text-white/50">{t('loginSubtitle')}</p>
           </div>
 
           <div className="rounded-[32px] border border-white/10 bg-white/5 p-8 backdrop-blur-xl shadow-2xl md:p-10">
             <form onSubmit={handleSubmit} className="space-y-5">
               <div>
                 <label className="text-xs font-bold uppercase tracking-widest text-indigo-400">
-                  Phone Number
+                  {t('phoneNumber')}
                 </label>
                 <input
                   type="text"
                   name="phone"
                   value={form.phone}
                   onChange={handleChange}
-                  placeholder="10-digit mobile number"
+                  placeholder={t('phonePlaceholder')}
                   className="mt-2 w-full rounded-2xl border border-white/10 bg-white/5 px-5 py-4 text-white placeholder-white/20 transition focus:border-indigo-500/50 focus:outline-none focus:ring-4 focus:ring-indigo-500/10"
                   required
                 />
@@ -71,7 +78,7 @@ export default function LoginPage() {
 
               <div>
                 <label className="text-xs font-bold uppercase tracking-widest text-indigo-400">
-                  Password
+                  {t('password')}
                 </label>
                 <input
                   type="password"
@@ -94,18 +101,18 @@ export default function LoginPage() {
                 type="submit"
                 className="w-full rounded-2xl bg-indigo-600 py-4 text-base font-bold text-white shadow-xl shadow-indigo-600/20 transition hover:bg-indigo-500 hover:-translate-y-0.5 active:translate-y-0"
               >
-                Sign In
+                {t('signIn')}
               </button>
             </form>
 
             <div className="mt-8 border-t border-white/5 pt-6 text-center">
               <p className="text-sm text-white/40">
-                New to GigShield?{" "}
+                {t('newToApp')}{" "}
                 <button
                   onClick={() => navigate("/register")}
                   className="font-bold text-indigo-400 hover:text-indigo-300 transition"
                 >
-                  Create an account
+                  {t('createAccount')}
                 </button>
               </p>
             </div>

@@ -38,6 +38,7 @@ enum ClaimStatus {
 enum PayoutStatus {
   PROCESSED
   PENDING
+  FAILED
 }
 
 model User {
@@ -102,10 +103,13 @@ model Claim {
 }
 
 model Payout {
-  id           Int          @id @default(autoincrement())
-  claimId      Int          @unique
-  claim        Claim        @relation(fields: [claimId], references: [id])
-  payoutStatus PayoutStatus @default(PROCESSED)
-  payoutMethod String
-  processedAt  DateTime     @default(now())
+  id                    Int          @id @default(autoincrement())
+  claimId               Int          @unique
+  claim                 Claim        @relation(fields: [claimId], references: [id])
+  payoutStatus          PayoutStatus @default(PENDING)
+  payoutMethod          String
+  razorpayPayoutId      String?
+  razorpayFundAccountId String?
+  failureReason         String?
+  processedAt           DateTime     @default(now())
 }

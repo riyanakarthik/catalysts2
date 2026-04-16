@@ -1,4 +1,4 @@
-// GigShield SVG Logo component
+// InsuriFyx SVG Logo component
 export default function Logo({ size = 32, className = '' }) {
   return (
     <svg
