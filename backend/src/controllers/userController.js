@@ -192,11 +192,13 @@ async function verifyLocation(req, res) {
   try {
     const { locationHistory, sensorData } = req.body;
     
-    if (isVelocityAnomalous(locationHistory)) {
+    const velocityReport = isVelocityAnomalous(locationHistory);
+    if (velocityReport.flagged) {
       return res.status(403).json({ message: 'Fraud Detected: Anomalous velocity (GPS Spoofing).', isFraud: true });
     }
 
-    if (!verifyDeviceSensors(sensorData)) {
+    const sensorReport = verifyDeviceSensors(sensorData);
+    if (sensorReport.flagged) {
        return res.status(403).json({ message: 'Fraud Detected: Sensor mismatch (Emulator).', isFraud: true });
     }
 

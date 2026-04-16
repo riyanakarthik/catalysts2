@@ -21,7 +21,7 @@ export default function ClaimsListPage() {
     try {
       const endpoint = isAdmin ? '/claims' : `/claims/${user.id}`;
       const res = await api.get(endpoint);
-      setClaims(res.data);
+      setClaims(res.data.data);
     } catch (err) {
       console.error('Failed to fetch claims', err);
     } finally {

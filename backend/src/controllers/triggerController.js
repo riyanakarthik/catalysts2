@@ -1,6 +1,7 @@
 const prisma = require('../prisma');
 const { processTriggerClaims } = require('../services/triggerService');
 const { runFraudAssessment } = require('../services/fraudService');
+const { t } = require('../services/i18nService');
 
 async function simulateTrigger(req, res) {
   try {
@@ -11,16 +12,22 @@ async function simulateTrigger(req, res) {
         triggerType,
         zone,
         severity,
-        source
+        source,
+        rainfall: req.body.rainfall ?? null,
+        aqi: req.body.aqi ?? null,
+        disruptionFrequency: req.body.disruptionFrequency ?? null
       }
     });
 
     const generatedClaims = await processTriggerClaims(triggerEvent);
 
     return res.status(201).json({
-      triggerEvent,
-      generatedClaimsCount: generatedClaims.length,
-      generatedClaims
+      message: t(req, 'triggerProcessed'),
+      data: {
+        triggerEvent,
+        generatedClaimsCount: generatedClaims.length,
+        generatedClaims
+      }
     });
   } catch (error) {
     console.error('simulateTrigger error', error);
@@ -28,21 +35,14 @@ async function simulateTrigger(req, res) {
   }
 }
 
-/**
- * Run a standalone fraud check on a specific user
- * Useful for admin dashboard / manual review
- */
 async function fraudCheck(req, res) {
   try {
-    const { userId, triggerType, zone, locationHistory, sensorData } = req.body;
+    const { userId, triggerType, zone } = req.body;
 
     const report = await runFraudAssessment({
       userId: Number(userId),
       triggerType: triggerType || 'RAIN',
-      zone: zone || 'Koramangala',
-      eventTime: new Date(),
-      locationHistory,
-      sensorData
+      zone: zone || 'Koramangala'
     });
 
     return res.json(report);

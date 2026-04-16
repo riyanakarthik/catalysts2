@@ -30,10 +30,8 @@ export default function PlanSelectionPage() {
     try {
       const { data } = await api.post('/premium/calculate', {
         planType: form.planType,
-        zone: user.zone,
-        platform: user.platform
       });
-      setQuote(data);
+      setQuote(data.data);
     } catch (error) {
       setMessage(`❌ ${t('calcQuote')} failed`);
       console.error("Premium calc error", error);
@@ -136,22 +134,30 @@ export default function PlanSelectionPage() {
                 </div>
               </div>
 
-              {quote.aiReasoning && (
-                <div className="rounded-[32px] bg-indigo-600/10 border border-indigo-400/20 p-8 shadow-inner">
-                  <p className="text-[10px] font-black uppercase tracking-[0.2em] text-indigo-400 mb-4 px-1">{t('aiInsight')}</p>
-                  <p className="text-sm leading-relaxed text-indigo-100 italic">{quote.aiReasoning}</p>
-                  <div className="mt-6 flex flex-wrap gap-4 pt-6 border-t border-indigo-500/20">
-                    <div className="flex flex-col">
-                      <span className="text-[10px] font-black text-indigo-400 uppercase tracking-widest">{t('zoneRisk')}</span>
-                      <span className="text-white font-bold">{quote.zoneRisk}</span>
-                    </div>
-                    <div className="flex flex-col border-l border-indigo-500/20 pl-4">
-                      <span className="text-[10px] font-black text-indigo-400 uppercase tracking-widest">{t('platformStatus')}</span>
-                      <span className="text-white font-bold">{quote.platformReliability}</span>
-                    </div>
+              <div className="rounded-[32px] bg-indigo-600/10 border border-indigo-400/20 p-8 shadow-inner">
+                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-indigo-400 mb-4 px-1">{t('aiInsight')}</p>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div>
+                    <p className="text-[10px] font-black uppercase tracking-widest text-indigo-300/70">Base Premium</p>
+                    <p className="mt-1 text-lg font-bold text-white">₹{quote.basePremium}</p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-black uppercase tracking-widest text-indigo-300/70">Risk Level</p>
+                    <p className="mt-1 text-lg font-bold text-white">{quote.riskLevel}</p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-black uppercase tracking-widest text-indigo-300/70">Risk Score</p>
+                    <p className="mt-1 text-lg font-bold text-white">{quote.riskScore}</p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-black uppercase tracking-widest text-indigo-300/70">{t('platformStatus')}</p>
+                    <p className="mt-1 text-lg font-bold text-white">{quote.pricingBreakdown.platformReliability}</p>
                   </div>
                 </div>
-              )}
+                <div className="mt-6 border-t border-indigo-500/20 pt-6 text-sm text-indigo-100">
+                  Rainfall {quote.zoneData.rainfall} mm, AQI {quote.zoneData.aqi}, disruption frequency {quote.zoneData.disruptionFrequency}/10.
+                </div>
+              </div>
 
               {/* RAZORPAY PAYMENT BUTTON */}
               <RazorpayUPIPayment

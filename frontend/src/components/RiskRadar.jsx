@@ -57,15 +57,15 @@ export default function RiskRadar() {
             <div 
               className={`absolute inset-0 rounded-full border-[8px] border-transparent `}
               style={{
-                borderTopColor: riskData.riskIndex > 40 ? '#ef4444' : '#10b981',
-                borderRightColor: riskData.riskIndex > 40 ? '#ef4444' : '#10b981',
+                borderTopColor: riskData.riskScore > 0.7 ? '#ef4444' : '#10b981',
+                borderRightColor: riskData.riskScore > 0.7 ? '#ef4444' : '#10b981',
                 borderBottomColor: '#10b981',
-                transform: `rotate(${riskData.riskIndex * 2.5}deg)`,
+                transform: `rotate(${riskData.riskScore * 180}deg)`,
                 transition: 'transform 1s ease-in-out'
               }}
             ></div>
             <div className="text-center">
-              <span className="block text-3xl font-black text-white">{Math.round(riskData.riskIndex)}</span>
+              <span className="block text-3xl font-black text-white">{Math.round(riskData.riskScore * 100)}</span>
               <span className="text-[10px] font-bold uppercase tracking-widest text-white/40">{t('riskIndex')}</span>
             </div>
           </div>
@@ -73,11 +73,13 @@ export default function RiskRadar() {
           <div className="flex-1 space-y-4">
             <div className="rounded-2xl border border-white/5 bg-white/5 p-4">
               <p className="text-xs font-bold uppercase tracking-wider text-indigo-400">{t('prediction')}</p>
-              <p className="mt-1 text-lg font-bold text-white capitalize">{riskData.prediction.replace('_', ' ')}</p>
+              <p className="mt-1 text-lg font-bold text-white capitalize">{riskData.riskLevel.toLowerCase()} risk</p>
             </div>
             <div className="rounded-2xl border border-white/5 bg-white/5 p-4">
               <p className="text-xs font-bold uppercase tracking-wider text-indigo-400">{t('aiReasoning')}</p>
-              <p className="mt-1 text-sm leading-relaxed text-emerald-300/80">{riskData.aiReasoning}</p>
+              <p className="mt-1 text-sm leading-relaxed text-emerald-300/80">
+                Rainfall {riskData.rainfall} mm, AQI {riskData.aqi}, disruption frequency {riskData.disruptionFrequency}/10.
+              </p>
             </div>
           </div>
         </div>

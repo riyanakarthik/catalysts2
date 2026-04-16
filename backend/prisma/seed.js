@@ -1,27 +1,8 @@
 const { PrismaClient } = require('@prisma/client');
+const bcrypt = require('bcrypt');
+const { calculateWeeklyPremium } = require('../src/services/premiumService');
 
 const prisma = new PrismaClient();
-
-const ZONE_RISK = {
-  Koramangala: 'high',
-  Indiranagar: 'medium',
-  Whitefield: 'high',
-  HSR: 'low'
-};
-
-const PLAN_CONFIG = {
-  BASIC: { basePremium: 18, maxWeeklyPayout: 1800 },
-  STANDARD: { basePremium: 35, maxWeeklyPayout: 3000 },
-  PREMIUM: { basePremium: 55, maxWeeklyPayout: 4500 }
-};
-
-function calculatePremium(planType, zoneRisk, platform) {
-  let premium = PLAN_CONFIG[planType].basePremium;
-  if (zoneRisk === 'high') premium += 8;
-  if (zoneRisk === 'medium') premium += 4;
-  if (platform === 'ZOMATO') premium += 4; // simple outage-prone assumption for MVP
-  return premium;
-}
 
 async function main() {
   await prisma.payout.deleteMany();
@@ -30,6 +11,7 @@ async function main() {
   await prisma.policy.deleteMany();
   await prisma.user.deleteMany();
 
+  const password = await bcrypt.hash('Hackathon@123', 10);
   const workers = [
     {
       fullName: 'Arjun Kumar',
@@ -72,22 +54,26 @@ async function main() {
         city: worker.city,
         zone: worker.zone,
         avgDailyEarnings: worker.avgDailyEarnings,
-        upiId: worker.upiId
+        upiId: worker.upiId,
+        password,
+        role: 'WORKER'
       }
     });
 
-    const weeklyPremium = calculatePremium(
-      worker.planType,
-      ZONE_RISK[worker.zone] || 'low',
-      worker.platform
-    );
+    const premium = await calculateWeeklyPremium({
+      ...user,
+      planType: worker.planType
+    });
 
     await prisma.policy.create({
       data: {
         userId: user.id,
         planType: worker.planType,
-        weeklyPremium,
-        maxWeeklyPayout: PLAN_CONFIG[worker.planType].maxWeeklyPayout,
+        basePremium: premium.basePremium,
+        weeklyPremium: premium.weeklyPremium,
+        riskScore: premium.riskScore,
+        riskLevel: premium.riskLevel,
+        maxWeeklyPayout: premium.maxWeeklyPayout,
         status: 'ACTIVE',
         startDate: new Date(),
         endDate: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7)
@@ -95,12 +81,12 @@ async function main() {
     });
   }
 
-  console.log('✅ Seed complete with sample workers and active policies.');
+  console.log('Seed complete with phase-3 sample workers and active policies.');
 }
 
 main()
-  .catch((e) => {
-    console.error(e);
+  .catch((error) => {
+    console.error(error);
     process.exit(1);
   })
   .finally(async () => {

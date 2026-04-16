@@ -44,6 +44,10 @@ export default function PolicyCard({ policy }) {
           <p className="mt-2 text-xl font-black text-white">₹{Number(policy.maxWeeklyPayout).toFixed(2)}</p>
         </div>
       </div>
+      <div className="flex items-center justify-between border-t border-white/5 px-5 py-4 text-[10px] font-black uppercase tracking-widest text-white/40">
+        <span>Risk {policy.riskLevel || 'LOW'}</span>
+        <span>Score {typeof policy.riskScore === 'number' ? policy.riskScore.toFixed(2) : '0.00'}</span>
+      </div>
     </div>
   );
 }

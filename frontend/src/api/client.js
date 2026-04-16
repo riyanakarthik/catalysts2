@@ -14,6 +14,9 @@ api.interceptors.request.use((config) => {
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
+
+  const language = localStorage.getItem('insurifyx_lang') || 'en';
+  config.headers['x-language'] = language;
   return config;
 });
 

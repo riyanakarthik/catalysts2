@@ -1,4 +1,5 @@
 const prisma = require('../prisma');
+const { t } = require('../services/i18nService');
 
 async function getAllClaims(req, res) {
   try {
@@ -12,7 +13,10 @@ async function getAllClaims(req, res) {
       orderBy: { createdAt: 'desc' }
     });
 
-    return res.json(claims);
+    return res.json({
+      message: t(req, 'claimsFetched'),
+      data: claims
+    });
   } catch (error) {
     console.error('getAllClaims error', error);
     return res.status(500).json({ message: 'Failed to fetch claims' });
@@ -32,7 +36,10 @@ async function getClaimsByUser(req, res) {
       orderBy: { createdAt: 'desc' }
     });
 
-    return res.json(claims);
+    return res.json({
+      message: t(req, 'claimsFetched'),
+      data: claims
+    });
   } catch (error) {
     console.error('getClaimsByUser error', error);
     return res.status(500).json({ message: 'Failed to fetch user claims' });

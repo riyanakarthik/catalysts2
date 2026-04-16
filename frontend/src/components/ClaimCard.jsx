@@ -82,6 +82,13 @@ export default function ClaimCard({ claim }) {
           </p>
         </div>
       )}
+
+      {claim.fraudFlag && (
+        <div className="mt-4 rounded-2xl border border-rose-500/20 bg-rose-500/10 px-4 py-3">
+          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-rose-300">Fraud Flag</p>
+          <p className="mt-1 text-xs text-rose-100">{claim.fraudReason}</p>
+        </div>
+      )}
     </div>
   );
 }
