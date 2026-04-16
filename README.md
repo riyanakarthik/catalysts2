@@ -72,8 +72,8 @@ The backend polls supported Bengaluru zones on a schedule, fetches live environm
 
 1. **Clone the repository**:
    ```bash
-   git clone <repo-url>
-   cd catalysts2
+   git clone https://github.com/riddhi2106/Catalysts
+   cd Catalysts
    ```
 
 2. **Backend Setup**:
@@ -105,14 +105,6 @@ The backend polls supported Bengaluru zones on a schedule, fetches live environm
 4. **Access the App**:
    The application will be running at `http://localhost:5173`.
 
-### Demo Credentials
-
-Use the seeded accounts below after running `npm run prisma:seed` in `backend`:
-
-- **Admin**: `9990000001` / `Admin@123`
-- **Worker**: `9876500011` / `Worker@123`
-- **Worker**: `9876500012` / `Worker@123`
-- **Worker**: `9876500013` / `Worker@123`
 
 ### Seeded Demo Zones
 
